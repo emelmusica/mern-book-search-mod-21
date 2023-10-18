@@ -1,4 +1,4 @@
-const { Tech, Matchup } = require('../models');
+const { User, Book } = require('../models'); 
 
 const resolvers = {
   Query: {
@@ -9,23 +9,47 @@ const resolvers = {
         return userData;
       }
 
-      throw AuthenticationError;
+      throw new AuthenticationError('Not logged in');
     },
   },
   Mutation: {
-    createMatchup: async (parent, args) => {
-      const matchup = await Matchup.create(args);
-      return matchup;
+    login: async (parent, { email, password }) => {
+     
     },
-    createVote: async (parent, { _id, techNum }) => {
-      // Increment the votes for a specific technology in a matchup
-      const updatedMatchup = await Matchup.findByIdAndUpdate(
-        _id,
-        { $inc: { [`tech${techNum}_votes`]: 1 } },
-        { new: true }
-      );
+    addUser: async (parent, { username, email, password }) => {
+      
+    },
+    saveBook: async (parent, { authors, description, title, bookId, image, link }, context) => {
+      if (context.user) {
+        const updatedUser = await User.findOneAndUpdate(
+          { _id: context.user._id },
+          {
+            $push: {
+              savedBooks: { authors, description, title, bookId, image, link },
+            },
+          },
+          { new: true }
+        );
 
-      return updatedMatchup;
+        return updatedUser;
+      }
+      throw new AuthenticationError('You need to be logged in');
+    },
+    removeBook: async (parent, { bookId }, context) => {
+      if (context.user) {
+        const updatedUser = await User.findOneAndUpdate(
+          { _id: context.user._id },
+          {
+            $pull: {
+              savedBooks: { bookId },
+            },
+          },
+          { new: true }
+        );
+
+        return updatedUser;
+      }
+      throw new AuthenticationError('You need to be logged in');
     },
   },
 };
